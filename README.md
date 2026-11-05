@@ -20,7 +20,7 @@ python3 main.py
 
 Mock mode requires no API key, network connection, or third-party package.
 
-## Enable Meta Llama streaming
+## Enable Meta Model API streaming
 
 ```bash
 python3 -m venv .venv
@@ -32,7 +32,7 @@ cp .env.example .env
 Add a valid key to `.env`:
 
 ```text
-LLAMA_API_KEY=your_key_here
+MODEL_API_KEY=your_key_here
 ```
 
 Then run:
@@ -41,13 +41,13 @@ Then run:
 python main.py
 ```
 
-The status bar will show whether the app is using Meta Llama or local simulation.
+The status bar will show whether the app is using Meta Model API or local simulation.
 
 ## Security
 
 - Never commit `.env` or an API key.
 - The repository includes only `.env.example`.
-- Provider calls are capped at 320 output tokens by default.
+- Provider calls use low reasoning effort and a 1,024-token output cap by default.
 - Only the six most recent conversation turns are sent to the provider.
 - Direct-answer and prompt-bypass requests are refused locally before a model call.
 
