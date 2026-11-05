@@ -1,10 +1,10 @@
-"""AI Education Agent — local stakeholder demo with optional Meta Llama API.
+"""AI Education Agent — local stakeholder demo with optional Meta Model API.
 
 Run:
     python main.py
 
-Without LLAMA_API_KEY, responses are simulated locally. When configured, the
-official Meta Llama API client streams real model responses in a worker thread.
+Without MODEL_API_KEY, responses are simulated locally. When configured, Meta's
+OpenAI-compatible Model API streams real model responses in a worker thread.
 """
 
 from __future__ import annotations
@@ -34,7 +34,8 @@ APP_TITLE = "AI Education Agent"
 ROLES = ("Student", "TA", "Research Team")
 AGENTS = ("Tutor Agent", "Problem-Solving Agent")
 WORKFLOW_STAGES = ("Diagnose", "Design Hint", "Gather Report", "Iterate")
-DEFAULT_META_MODEL = "Llama-4-Maverick-17B-128E-Instruct-FP8"
+DEFAULT_META_MODEL = "muse-spark-1.3"
+DEFAULT_META_BASE_URL = "https://api.meta.ai/v1"
 
 
 LIGHT = {
@@ -85,18 +86,18 @@ class InteractionLog:
     reason: str = ""
 
 
-class MetaLlamaService:
-    """Small adapter around Meta's official streaming Llama API client."""
+class MetaModelService:
+    """Adapter for Meta Model API's OpenAI-compatible streaming endpoint."""
 
-    def __init__(self, api_key: str, model: str) -> None:
+    def __init__(self, api_key: str, model: str, base_url: str) -> None:
         try:
-            from llama_api_client import LlamaAPIClient
+            from openai import OpenAI
         except ImportError as exc:
             raise RuntimeError(
-                "Meta mode requires the llama-api-client package. "
+                "Meta mode requires the openai package. "
                 "Install dependencies with: python -m pip install -r requirements.txt"
             ) from exc
-        self.client = LlamaAPIClient(api_key=api_key)
+        self.client = OpenAI(api_key=api_key, base_url=base_url, timeout=45.0, max_retries=1)
         self.model = model
 
     def stream_reply(
@@ -106,19 +107,27 @@ class MetaLlamaService:
         max_tokens: int,
         temperature: float,
     ) -> Iterator[str]:
-        stream = self.client.chat.completions.create(
+        # Muse uses reasoning tokens before producing visible text. Low effort plus a
+        # bounded default keeps the response useful without an unbounded budget.
+        _ = temperature  # Retained in the service interface for mock/provider parity.
+        stream = self.client.responses.create(
             model=self.model,
-            messages=messages,
-            max_completion_tokens=max_tokens,
-            temperature=temperature,
+            input=messages,
+            max_output_tokens=max_tokens,
+            reasoning={"effort": "low"},
             stream=True,
         )
-        for chunk in stream:
-            event = getattr(chunk, "event", None)
-            delta = getattr(event, "delta", None)
-            text = getattr(delta, "text", "") if delta is not None else ""
-            if text:
-                yield text
+        produced_text = False
+        for event in stream:
+            if getattr(event, "type", "") == "response.output_text.delta":
+                text = getattr(event, "delta", "")
+                if text:
+                    produced_text = True
+                    yield text
+        if not produced_text:
+            raise RuntimeError(
+                "Meta completed without visible text. Increase META_MAX_COMPLETION_TOKENS."
+            )
 
     def close(self) -> None:
         self.client.close()
@@ -175,10 +184,13 @@ class EducationAgentApp(tk.Tk):
         self.session_messages = {agent: [] for agent in AGENTS}
         self.logs = self._seed_logs()
 
-        self.meta_service: Optional[MetaLlamaService] = None
-        self.meta_model = os.getenv("LLAMA_MODEL", DEFAULT_META_MODEL).strip()
+        self.meta_service: Optional[MetaModelService] = None
+        self.meta_model = os.getenv(
+            "META_MODEL", os.getenv("LLAMA_MODEL", DEFAULT_META_MODEL)
+        ).strip()
+        self.meta_base_url = os.getenv("META_BASE_URL", DEFAULT_META_BASE_URL).strip().rstrip("/")
         self.max_completion_tokens = self._bounded_env_int(
-            "LLAMA_MAX_COMPLETION_TOKENS", default=320, minimum=64, maximum=1024
+            "META_MAX_COMPLETION_TOKENS", default=1024, minimum=256, maximum=2048
         )
         self.provider_error = ""
         self._configure_provider()
@@ -206,20 +218,20 @@ class EducationAgentApp(tk.Tk):
 
     def _configure_provider(self) -> None:
         mode = os.getenv("AI_AGENT_MODE", "auto").strip().lower()
-        api_key = os.getenv("LLAMA_API_KEY", "").strip()
-        if mode == "mock" or not api_key:
+        api_key = os.getenv("MODEL_API_KEY", os.getenv("LLAMA_API_KEY", "")).strip()
+        if mode == "mock" or not api_key or api_key.startswith("replace_with_"):
             return
         try:
-            self.meta_service = MetaLlamaService(api_key, self.meta_model)
+            self.meta_service = MetaModelService(api_key, self.meta_model, self.meta_base_url)
         except RuntimeError as exc:
             self.provider_error = str(exc)
 
     def _base_status(self) -> str:
         if self.meta_service:
-            return f"Meta Llama connected • {self.meta_model} • streamed responses"
+            return f"Meta Model API connected • {self.meta_model} • streamed responses"
         if self.provider_error:
             return "Mock mode • Meta client unavailable • see setup guide"
-        return "Local simulation • Set LLAMA_API_KEY for Meta • 0 external tokens"
+        return "Local simulation • Set MODEL_API_KEY for Meta • 0 external tokens"
 
     @staticmethod
     def _seed_logs() -> list[InteractionLog]:
@@ -652,9 +664,9 @@ class EducationAgentApp(tk.Tk):
         self.stream_generation += 1
         generation = self.stream_generation
         target_agent = self.active_agent
-        bubble = self._add_bubble("ai", "Contacting Meta Llama…")
+        bubble = self._add_bubble("ai", "Contacting Meta Model API…")
         self.send_button.configure(state="disabled", text="Responding…")
-        self.status_var.set(f"Streaming from Meta Llama • limit {self.max_completion_tokens} tokens")
+        self.status_var.set(f"Streaming from Meta Model API • limit {self.max_completion_tokens} tokens")
         events: queue.Queue[tuple[str, str]] = queue.Queue()
         request_messages = self._meta_messages(target_agent)
         temperature = float(self.temperature_var.get())
