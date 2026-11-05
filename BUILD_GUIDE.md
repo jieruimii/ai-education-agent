@@ -8,7 +8,7 @@ This guide takes the included stakeholder demo into a safe, token-efficient pilo
 
 - Python 3.10 or newer
 - Tk support (included with the standard Python installers for Windows and macOS)
-- No API key for mock mode; a Meta Llama API key for live mode
+- No API key for mock mode; a Meta Model API key for live mode
 
 ### Start it
 
@@ -30,7 +30,7 @@ This guide takes the included stakeholder demo into a safe, token-efficient pilo
 
 The app keeps conversations and demo records in memory. Closing it resets them.
 
-### Enable Meta Llama streaming
+### Enable Meta Model API streaming
 
 The credential previously pasted into chat should be treated as exposed. Revoke it in the Meta developer console and create a replacement before continuing.
 
@@ -50,14 +50,14 @@ The credential previously pasted into chat should be treated as exposed. Revoke 
    ```
 
 3. Copy `.env.example` to `.env`.
-4. Put the **newly rotated** key after `LLAMA_API_KEY=` in `.env`.
+4. Put the **newly rotated** key after `MODEL_API_KEY=` in `.env`.
 5. Keep `AI_AGENT_MODE=auto` and start the app:
 
    ```bash
    python main.py
    ```
 
-6. Confirm the bottom status bar says `Meta Llama connected` before sending a real request.
+6. Confirm the bottom status bar says `Meta Model API connected` before sending a real request.
 7. To return to the free local demo, set `AI_AGENT_MODE=mock` and restart.
 
 The `.gitignore` excludes `.env`. Never put the key directly in `main.py`, a screenshot, a commit, or a stakeholder build.
@@ -138,7 +138,7 @@ This separation lets the team change model vendors without rewriting the applica
 Use the exact endpoint and request schema shown in the provider documentation for your account; do not assume every Meta or Llama host uses the same format.
 
 1. Create a `MetaLlamaAdapter` on the backend only.
-2. Read `LLAMA_API_KEY`, `LLAMA_MODEL`, and other provider configuration from the backend environment.
+2. Read `MODEL_API_KEY`, `META_MODEL`, and other provider configuration from the backend environment.
 3. Set strict connect/read timeouts.
 4. Request streaming if the provider supports it.
 5. Normalize provider events into your own internal event format:
