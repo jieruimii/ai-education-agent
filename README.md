@@ -7,6 +7,8 @@ A desktop prototype for instructor-governed AI learning support, built with Pyth
 - Student, TA, and Research Team role views
 - Tutor Agent for explanations and comprehension checks
 - Hint-first Problem-Solving Agent with a four-stage workflow
+- Attach-any-file picker with native PDF/image/video inputs and local TXT/Word extraction
+- Complete worked solutions in Tutor mode; hint-only coaching in Problem-Solving mode
 - Direct-answer refusal and TA flag review
 - Cross-course telemetry and prompt-governance controls
 - Local mock responses or streaming through Meta's official Llama API client
@@ -47,8 +49,9 @@ The status bar will show whether the app is using Meta Model API or local simula
 
 - Never commit `.env` or an API key.
 - The repository includes only `.env.example`.
-- Provider calls use low reasoning effort and a 1,024-token output cap by default.
+- Provider calls use low reasoning effort and a 2,048-token output cap by default.
 - Only the six most recent conversation turns are sent to the provider.
-- Direct-answer and prompt-bypass requests are refused locally before a model call.
+- Temporary Meta file uploads are deleted after each response.
+- Direct-answer requests are answered in Tutor mode and refused only in Problem-Solving mode.
 
 See [BUILD_GUIDE.md](BUILD_GUIDE.md) for architecture, token optimization, authorization, evaluation, and pilot guidance.

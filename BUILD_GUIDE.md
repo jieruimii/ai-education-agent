@@ -28,6 +28,12 @@ This guide takes the included stakeholder demo into a safe, token-efficient pilo
 7. Open **Research Team** and show aggregate telemetry and prompt governance.
 8. Toggle dark mode.
 
+To test coursework uploads, stay in **Tutor Agent**, click **Attach**, choose one or
+more local files, enter the exact problem to solve, and click **Send**. The picker
+accepts every file type. TXT, Markdown, CSV, DOC, DOCX, and RTF text is extracted
+locally; PDFs, images, video, and supported media are sent as temporary Meta file
+inputs. The app deletes temporary provider uploads after the response completes.
+
 The app keeps conversations and demo records in memory. Closing it resets them.
 
 ### Enable Meta Model API streaming
