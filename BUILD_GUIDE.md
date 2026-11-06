@@ -1,6 +1,6 @@
 # AI Education Agent — Build and Delivery Guide
 
-This guide takes the included stakeholder demo into a safe, token-efficient pilot. It runs in mock mode without a key and can stream real responses through Meta's official Llama API client when configured.
+This guide takes the included stakeholder demo into a safe, token-efficient pilot. It runs in mock mode without a key and can stream real Muse Wonder responses through Meta Model API when configured.
 
 ## 1. Run the local demo
 
@@ -28,17 +28,14 @@ This guide takes the included stakeholder demo into a safe, token-efficient pilo
 7. Open **Research Team** and show aggregate telemetry and prompt governance.
 8. Toggle dark mode.
 
-To test coursework uploads, stay in **Tutor Agent**, click **Attach**, choose one or
-more local files, enter the exact problem to solve, and click **Send**. The picker
-accepts every file type. TXT, Markdown, CSV, DOC, DOCX, and RTF text is extracted
-locally; PDFs, images, video, and supported media are sent as temporary Meta file
-inputs. The app deletes temporary provider uploads after the response completes.
+The attachment picker remains visible for the existing desktop workflow, but
+selected files stay on the device. The prototype does not send files to Meta
+because a general provider retention period has not been verified. Paste only a
+short, non-sensitive excerpt into the chat when text context is needed.
 
 The app keeps conversations and demo records in memory. Closing it resets them.
 
 ### Enable Meta Model API streaming
-
-The credential previously pasted into chat should be treated as exposed. Revoke it in the Meta developer console and create a replacement before continuing.
 
 1. Create a virtual environment in the same folder as `main.py`:
 
@@ -57,7 +54,7 @@ The credential previously pasted into chat should be treated as exposed. Revoke 
 
 3. Copy `.env.example` to `.env`.
 4. Put the **newly rotated** key after `MODEL_API_KEY=` in `.env`.
-5. Keep `AI_AGENT_MODE=auto` and start the app:
+5. Set `AI_AGENT_MODE=meta` and start the app:
 
    ```bash
    python main.py
@@ -139,11 +136,15 @@ This separation lets the team change model vendors without rewriting the applica
 6. Never commit `.env`, credentials, raw student exports, or provider keys.
 7. Add request IDs so a UI event, retrieval trace, model call, and audit record can be correlated.
 
-### Phase D — connect the Meta/Llama provider
+### Phase D — connect the Meta provider
 
-Use the exact endpoint and request schema shown in the provider documentation for your account; do not assume every Meta or Llama host uses the same format.
+The prototype uses Meta's documented Responses API at
+`https://api.meta.ai/v1`, model `muse-wonder-1.0`, bearer authentication through
+`MODEL_API_KEY`, low reasoning effort, and `response.output_text.delta` streaming
+events. Recheck the official documentation before a production launch because
+Muse Wonder is currently a preview model.
 
-1. Create a `MetaLlamaAdapter` on the backend only.
+1. Move the existing Meta provider adapter to the backend before production.
 2. Read `MODEL_API_KEY`, `META_MODEL`, and other provider configuration from the backend environment.
 3. Set strict connect/read timeouts.
 4. Request streaming if the provider supports it.
