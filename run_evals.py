@@ -13,7 +13,7 @@ def main() -> int:
     service = MockEducationService()
     failures = []
     for case in cases:
-        profile = StudentProfile(active_course=case["course"])
+        profile = StudentProfile()
         answer = service.tutor_reply(profile, case["question"]).text
         lowered = answer.lower()
         missing = [term for term in case["must_include"] if term.lower() not in lowered]

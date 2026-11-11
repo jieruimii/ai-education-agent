@@ -71,7 +71,49 @@ THROTTLING = ConceptCard(
 )
 
 
-CONCEPT_CARDS = (THROTTLING,)
+SUPERVISED_VS_UNSUPERVISED = ConceptCard(
+    card_id="ml.supervised-vs-unsupervised.v1",
+    title="Supervised versus unsupervised machine learning",
+    aliases=(
+        "supervised machine learning and unsupervised machine learning",
+        "unsupervised machine learning and supervised machine learning",
+        "supervised vs unsupervised",
+        "unsupervised vs supervised",
+        "difference between unsupervised machine learning and supervised machine learning",
+        "difference between supervised machine learning and unsupervised machine learning",
+    ),
+    claims=(
+        "Supervised learning trains on input examples paired with target labels and learns a mapping that predicts the target for new inputs.",
+        "Classification predicts a category, while regression predicts a numeric value; both are common supervised-learning tasks.",
+        "Unsupervised learning receives inputs without target labels and searches for useful structure such as clusters, lower-dimensional representations, density patterns, or anomalies.",
+        "The defining distinction is whether a target label is supplied for the learning objective, not whether a human ever touched the data.",
+        "Supervised performance can be measured against held-out labels. Unsupervised results require task-specific validation because there may be no single ground-truth target.",
+        "Neither approach is universally better; the choice follows the available data and the question being answered.",
+    ),
+    equations=(
+        "Supervised empirical risk: minimize (1/n) Σ L(f(x_i), y_i), where y_i is the provided target label.",
+        "A clustering example: choose cluster assignments and centers that minimize within-cluster distance; no target y_i is provided.",
+    ),
+    assumptions=(
+        "training and evaluation data represent the intended deployment setting",
+        "labels in supervised learning are sufficiently accurate and relevant",
+        "the chosen unsupervised objective corresponds to structure that is useful for the real task",
+    ),
+    misconceptions=(
+        "Unsupervised learning does not mean that no human choices or evaluation are involved.",
+        "Unsupervised learning is not automatically more objective; its features, distance metric, and number of clusters encode choices.",
+        "A dataset can support both approaches depending on whether a target variable is used.",
+    ),
+    example=(
+        "Given emails labeled spam or not spam, learning to predict the label is supervised classification. "
+        "Given unlabeled customer behavior and grouping similar customers, the task is unsupervised clustering."
+    ),
+    source_title="Stanford Engineering Everywhere, CS229 Machine Learning",
+    source_url="https://see.stanford.edu/Course/CS229",
+)
+
+
+CONCEPT_CARDS = (THROTTLING, SUPERVISED_VS_UNSUPERVISED)
 
 
 def _normalized(text: str) -> str:

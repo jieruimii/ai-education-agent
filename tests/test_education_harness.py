@@ -68,12 +68,12 @@ class HarnessContractTests(unittest.TestCase):
         self.profile = StudentProfile(
             engineering_major="Mechanical Engineering",
             academic_level="Undergraduate",
-            active_course="Thermodynamics",
+            active_course="MATH 407 • Probability Theory",
         )
         self.question = "Explain the throttling process"
 
     def test_throttling_retrieval_is_exact_and_source_approved(self):
-        cards = find_concept_cards(self.question, self.profile.active_course)
+        cards = find_concept_cards(self.question)
         self.assertEqual([card.card_id for card in cards], ["thermo.throttling.v1"])
         self.assertIn("ocw.mit.edu", cards[0].source_url)
         self.assertFalse(find_concept_cards("Explain beam bending", "Statics"))
@@ -85,7 +85,7 @@ class HarnessContractTests(unittest.TestCase):
         self.assertFalse(contract.needs_uncertainty_note)
 
     def test_deterministic_rubric_rejects_generic_answer(self):
-        cards = find_concept_cards(self.question, self.profile.active_course)
+        cards = find_concept_cards(self.question)
         contract = build_question_contract(self.profile, self.question, cards)
         report = evaluate_answer(
             self.question,
@@ -133,6 +133,20 @@ class HarnessContractTests(unittest.TestCase):
         self.assertIn("h_1\\approx h_2", answer)
         self.assertIn("not necessarily isothermal", answer)
         self.assertIn("entropy increases", answer)
+
+    def test_legacy_course_cannot_override_machine_learning_question(self):
+        question = (
+            "Explain what is the difference between unsupervised machine learning "
+            "and supervised machine learning"
+        )
+        cards = find_concept_cards(question)
+        self.assertEqual(cards[0].card_id, "ml.supervised-vs-unsupervised.v1")
+        contract = build_question_contract(self.profile, question, cards)
+        self.assertIn("machine learning", contract.topic.lower())
+        answer = MockEducationService().tutor_reply(self.profile, question).text
+        self.assertIn("target label", answer.lower())
+        self.assertIn("unsupervised clustering", answer.lower())
+        self.assertNotIn("both pass with probability", answer.lower())
 
 
 if __name__ == "__main__":

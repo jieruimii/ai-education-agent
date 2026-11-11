@@ -8,6 +8,8 @@ A desktop prototype for instructor-governed AI learning support, built with Pyth
 - Tutor Agent for explanations and comprehension checks
 - Release-gated Tutor harness: analyze, ground, draft, evaluate, revise once, then display
 - Instructor-reviewable concept evidence with a throttling-process regression card
+- Question-first topic routing; no Active Course selector can bias an unrelated question
+- Reviewed comparison card for supervised versus unsupervised machine learning
 - Hint-first Problem-Solving Agent with a four-stage workflow
 - Local attachment picker with provider upload disabled pending privacy approval
 - Complete worked solutions in Tutor mode; hint-only coaching in Problem-Solving mode

@@ -24,8 +24,13 @@ In Meta Mode, Tutor responses pass through a single-agent workflow:
 Unchecked provider text is not displayed. A passing answer normally uses two
 model calls; a rejected draft may use a third revision call. This improves
 answer structure and reduces unsupported claims, but it cannot guarantee factual
-correctness. Only the throttling-process concept currently has a reviewed local
-knowledge card; other courses need instructor-approved evidence and evaluations.
+correctness. The reviewed local cards currently cover the throttling process and
+supervised-versus-unsupervised machine learning; other concepts still need
+instructor-approved evidence and evaluations.
+
+The Student Profile intentionally has no Active Course selector. The current
+question controls topic detection, evidence retrieval, and resource ranking so a
+previous course choice cannot contaminate an unrelated answer.
 
 ## macOS Gatekeeper
 

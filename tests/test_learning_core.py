@@ -193,6 +193,13 @@ class TutorPersonalizationTests(unittest.TestCase):
             if previous is not None:
                 os.environ["MODEL_API_KEY"] = previous
 
+    def test_current_question_overrides_legacy_active_course(self):
+        profile = StudentProfile(active_course="MATH 407 • Probability Theory")
+        question = "Compare supervised and unsupervised machine learning"
+        answer = self.service.tutor_reply(profile, question).text
+        self.assertIn("target label", answer.lower())
+        self.assertNotIn("two components both pass", answer.lower())
+
 
 class ResourceCatalogTests(unittest.TestCase):
     def test_catalog_size_and_metadata(self):
@@ -249,6 +256,16 @@ class ResourceCatalogTests(unittest.TestCase):
         for item in results:
             self.assertGreater(item.score, 0)
             self.assertTrue(item.reasons)
+
+    def test_current_query_controls_resources_not_legacy_course(self):
+        profile = StudentProfile(
+            engineering_major="Data Science",
+            active_course="MATH 407 • Probability Theory",
+        )
+        results = recommend_resources("supervised and unsupervised machine learning", profile, limit=3)
+        self.assertTrue(results)
+        self.assertEqual(results[0].resource.title, "CS229 Machine Learning")
+        self.assertFalse(any("active-course" in reason for item in results for reason in item.reasons))
 
 
 if __name__ == "__main__":

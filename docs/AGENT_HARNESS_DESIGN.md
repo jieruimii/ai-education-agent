@@ -76,6 +76,7 @@ explaining the requested concept.
 ## Grounding and hallucination controls
 
 - `knowledge_base.py` contains compact cards that an instructor can inspect line by line.
+- The current question—not a profile course field—is the authoritative topic-routing input.
 - Retrieval uses exact aliases instead of fuzzy semantic matching, reducing wrong-card retrieval.
 - The prompt labels learner content as untrusted and separates it from policy and evidence.
 - A matching card is the factual boundary for the draft and revision.
@@ -86,9 +87,10 @@ explaining the requested concept.
 - No unchecked streaming text is displayed; the UI buffers until the harness releases an answer.
 - Problem-Solving mode remains a separate deterministic hint-first state machine.
 
-The current approved throttling card is grounded in MIT Unified Engineering Thermodynamics,
-Chapter 4. It captures the pressure drop, steady-flow energy balance, isenthalpic idealization,
-irreversibility, temperature caveat, refrigeration example, and common misconceptions.
+The approved throttling card is grounded in MIT Unified Engineering Thermodynamics, Chapter 4.
+The supervised-versus-unsupervised card is grounded in Stanford CS229. A regression test retains
+a legacy Probability Theory value in the Python profile and verifies that it cannot change a
+machine-learning question, evidence selection, answer, or recommended resource.
 
 ## Evaluation strategy
 
@@ -117,8 +119,8 @@ Instructor review and course-grounded evidence remain required for high-stakes c
 
 - Tutor Meta Mode now uses two calls for a passing answer and up to three when revision is needed.
 - The first visible response arrives later because unchecked tokens are not streamed to students.
-- Accuracy is improved only for reviewed concepts. The current knowledge base contains one
-  regression concept; it must grow through instructor-approved cards or a governed course RAG
+- Accuracy is improved only for reviewed concepts. The current knowledge base contains two
+  regression concepts; it must grow through instructor-approved cards or a governed course RAG
   collection before the system can claim broad engineering coverage.
 
 ## Next implementation milestone

@@ -87,7 +87,6 @@ def _profile_context(profile: StudentProfile) -> str:
         f"Engineering major: {profile.engineering_major}\n"
         f"Academic level: {profile.academic_level}\n"
         f"Learning goal: {profile.learning_goal}\n"
-        f"Active course: {profile.active_course}\n"
         f"Explanation preference: {profile.explanation_preference}"
     )
 

@@ -18,5 +18,23 @@
       "produces shaft work"
     ],
     "minimum_words": 180
+  },
+  {
+    "id": "question-overrides-legacy-course",
+    "course": "Probability Theory",
+    "question": "Explain what is the difference between unsupervised machine learning and supervised machine learning",
+    "must_include": [
+      "target label",
+      "supervised classification",
+      "unsupervised clustering",
+      "held-out labeled",
+      "distance metric"
+    ],
+    "must_not_include": [
+      "two components both pass",
+      "bayes theorem",
+      "probability distribution is the main difference"
+    ],
+    "minimum_words": 180
   }
 ]

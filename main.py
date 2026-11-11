@@ -494,13 +494,11 @@ class EducationAgentApp(tk.Tk):
         self.profile_major_var = tk.StringVar(value=self.student_profile.engineering_major)
         self.profile_level_var = tk.StringVar(value=self.student_profile.academic_level)
         self.profile_goal_var = tk.StringVar(value=self.student_profile.learning_goal)
-        self.profile_course_var = tk.StringVar(value=self.student_profile.active_course)
         self.profile_preference_var = tk.StringVar(value=self.student_profile.explanation_preference)
         for variable in (
             self.profile_major_var,
             self.profile_level_var,
             self.profile_goal_var,
-            self.profile_course_var,
             self.profile_preference_var,
         ):
             variable.trace_add("write", self._sync_student_profile)
@@ -565,7 +563,6 @@ class EducationAgentApp(tk.Tk):
         self.student_profile.engineering_major = self.profile_major_var.get().strip() or "General Engineering"
         self.student_profile.academic_level = self.profile_level_var.get().strip() or "Undergraduate"
         self.student_profile.learning_goal = self.profile_goal_var.get().strip() or "Build conceptual understanding"
-        self.student_profile.active_course = self.profile_course_var.get().strip() or "General Engineering"
         self.student_profile.explanation_preference = (
             self.profile_preference_var.get().strip() or "Step-by-step"
         )
@@ -720,9 +717,6 @@ class EducationAgentApp(tk.Tk):
               "Computer Engineering", "Data Science")),
             ("Academic level", self.profile_level_var,
              ("First-year Undergraduate", "Undergraduate", "Advanced Undergraduate", "Graduate")),
-            ("Active course", self.profile_course_var,
-             ("MATH 407 • Probability Theory", "ENGR 101 • Statics", "EE 201 • Circuits",
-              "MATH 226 • Calculus II", "ME 301 • Thermodynamics", "AE 210 • Dynamics")),
             ("Explanation", self.profile_preference_var,
              ("Step-by-step", "Concise", "Analogy-first")),
         )
@@ -996,7 +990,7 @@ class EducationAgentApp(tk.Tk):
                 self._draw_workflow()
             self.logs.insert(0, InteractionLog(
                 datetime.now().strftime("%I:%M %p").lstrip("0"), "Demo Student",
-                self.student_profile.active_course, self.active_agent, message, flagged, reason,
+                self._extract_topic(message).title(), self.active_agent, message, flagged, reason,
             ))
             self._stream_meta_education_response(message, directive)
         else:
@@ -1025,7 +1019,7 @@ class EducationAgentApp(tk.Tk):
                 response += "\n\n" + format_recommendations(recommendations)
             self.logs.insert(0, InteractionLog(
                 datetime.now().strftime("%I:%M %p").lstrip("0"), "Demo Student",
-                self.student_profile.active_course, self.active_agent, message, flagged, reason,
+                self._extract_topic(message).title(), self.active_agent, message, flagged, reason,
             ))
             self._stream_response(response)
 
@@ -1211,7 +1205,7 @@ class EducationAgentApp(tk.Tk):
                             self.logs.insert(0, InteractionLog(
                                 datetime.now().strftime("%I:%M %p").lstrip("0"),
                                 "Demo Student",
-                                self.student_profile.active_course,
+                                self._extract_topic(message).title(),
                                 target_agent,
                                 "Provider output withheld before display",
                                 True,
@@ -1515,8 +1509,8 @@ def _run_packaged_self_test() -> None:
     buffer.seek(0)
     with Image.open(buffer) as rendered:
         rendered.verify()
-    profile = StudentProfile(active_course="Thermodynamics")
-    cards = find_concept_cards("Explain the throttling process", profile.active_course)
+    profile = StudentProfile()
+    cards = find_concept_cards("Explain the throttling process")
     contract = build_question_contract(profile, "Explain the throttling process", cards)
     answer = MockEducationService().tutor_reply(
         profile, "Explain the throttling process"

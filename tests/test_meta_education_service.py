@@ -108,13 +108,14 @@ class MetaEducationServiceTests(unittest.TestCase):
         self.assertEqual(call["messages"][0]["role"], "developer")
         self.assertEqual(call["messages"][-1]["role"], "user")
 
-    def test_profile_context_is_in_every_provider_request(self):
+    def test_profile_context_excludes_legacy_active_course(self):
         list(self.service.stream_tutor_reply(self.profile, "Explain poles"))
         request_text = "\n".join(item["content"] for item in self.transport.calls[0]["messages"])
         self.assertIn("Electrical Engineering", request_text)
         self.assertIn("Graduate", request_text)
         self.assertIn("Master feedback control", request_text)
-        self.assertIn("EE 501", request_text)
+        self.assertNotIn("EE 501", request_text)
+        self.assertNotIn("Active course", request_text)
         self.assertIn("Concise", request_text)
 
     def test_history_is_bounded_and_current_question_is_last(self):

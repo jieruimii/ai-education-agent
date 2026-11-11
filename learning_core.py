@@ -31,7 +31,9 @@ class StudentProfile:
     engineering_major: str = "General Engineering"
     academic_level: str = "Undergraduate"
     learning_goal: str = "Build conceptual understanding"
-    active_course: str = "MATH 407 • Probability Theory"
+    # Retained only for compatibility with older saved/test objects. The UI no
+    # longer exposes this field and routing must never use it.
+    active_course: str = ""
     explanation_preference: str = "Step-by-step"
 
 
@@ -190,11 +192,16 @@ def _attempt_quality(message: str) -> str:
 
 def _topic_key(text: str) -> str:
     normalized = text.lower()
+    if _has_any(normalized, ("machine learning", "supervised", "unsupervised", "classification", "clustering")):
+        return "machine learning"
     if _has_any(normalized, ("moment", "reaction", "beam", "free-body", "free body", "statics")):
         return "statics"
     if _has_any(normalized, ("circuit", "current", "voltage", "resistor", "kcl", "kvl")):
         return "circuits"
-    if _has_any(normalized, ("thermo", "heat", "enthalpy", "energy balance", "control volume")):
+    if _has_any(normalized, (
+        "thermo", "heat", "enthalpy", "energy balance", "control volume",
+        "throttl", "expansion valve", "pressure reducing valve",
+    )):
         return "thermodynamics"
     if _has_any(normalized, ("derivative", "integral", "calculus", "differentiate")):
         return "calculus"
@@ -300,6 +307,12 @@ def _worked_example(topic: str) -> str:
             "two components both pass with probability 0.9 × 0.9 = 0.81. The complement shows "
             "the chance of at least one failure is 1 - 0.81 = 0.19."
         )
+    if topic == "machine learning":
+        return (
+            "Worked comparison: predicting whether an email is spam from examples labeled spam/not-spam "
+            "is supervised classification. Grouping unlabeled customers by similar behavior is unsupervised "
+            "clustering. The key question is whether the training objective receives a target label y."
+        )
     return (
         "Worked practice method: define the system, list knowns and unknowns, select the governing "
         "principle, solve symbolically, substitute units, and verify the result against a limiting case."
@@ -344,13 +357,48 @@ def _throttling_explanation() -> str:
     )
 
 
+def _machine_learning_comparison() -> str:
+    return (
+        "Supervised learning learns to predict a supplied target label, while unsupervised learning looks "
+        "for useful structure in inputs that have no target label.\n\n"
+        "## What it is\n"
+        "In supervised learning, every training example contains an input $x$ and a desired target $y$. "
+        "In unsupervised learning, the algorithm receives $x$ values but no target $y$ for the objective.\n\n"
+        "## How it works\n"
+        "A supervised model adjusts its parameters so predictions match known labels, then is tested on "
+        "held-out labeled examples. An unsupervised model instead optimizes a structural objective—such as "
+        "making points within a cluster similar or compressing the data while preserving important variation.\n\n"
+        "## Governing equation\n"
+        "A common supervised objective is $\\min_f \\frac{1}{n}\\sum_i L(f(x_i),y_i)$, where $L$ measures "
+        "prediction error. A clustering objective can minimize distances from points to assigned cluster "
+        "centers; it contains no supplied target $y_i$.\n\n"
+        "## Assumptions and limits\n"
+        "Supervised learning depends on representative, accurate labels. Unsupervised learning depends on "
+        "whether the chosen features, similarity measure, and objective capture structure useful to the real task.\n\n"
+        "## Concrete example\n"
+        "Learning from emails labeled spam/not-spam is supervised classification. Grouping unlabeled "
+        "customers by behavioral similarity is unsupervised clustering.\n\n"
+        "## Common misconception\n"
+        "Unsupervised does not mean no humans are involved or that the result is automatically objective. "
+        "Humans still choose the data, features, algorithm, distance metric, and evaluation method.\n\n"
+        "## Check your understanding\n"
+        "If you have customer records plus a churn/no-churn target, which approach would you use to predict churn—and why?\n\n"
+        "Source: Stanford Engineering Everywhere, CS229 Machine Learning — "
+        "https://see.stanford.edu/Course/CS229"
+    )
+
+
 def tutor_response(profile: StudentProfile, message: str) -> str:
-    topic = _topic_key(f"{profile.active_course} {message}")
+    # The current question is authoritative. Profile fields personalize style,
+    # but must never override or contaminate topic routing.
+    topic = _topic_key(message)
     normalized = message.lower()
     if topic == "thermodynamics" and any(
         term in normalized for term in ("throttl", "expansion valve", "pressure reducing valve")
     ):
         return _throttling_explanation()
+    if topic == "machine learning" and "supervised" in normalized and "unsupervised" in normalized:
+        return _machine_learning_comparison()
     preference = profile.explanation_preference.lower()
     style = (
         "I will keep the explanation compact."
@@ -425,7 +473,7 @@ def problem_solver_response(
             if _is_substantive_attempt(message):
                 session.attempts.append(StudentAttempt(message.strip(), _attempt_quality(message)))
             session.hint_level = select_hint_level(session)
-            topic = _topic_key(f"{profile.active_course} {session.problem} {message}")
+            topic = _topic_key(f"{session.problem} {message}")
             hint = progressive_hint(topic, session.hint_level)
             session.hints_given.append(hint)
             session.stage = WorkflowStage.GATHER_REPORT

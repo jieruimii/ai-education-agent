@@ -254,7 +254,6 @@ def recommend_resources(
     """Rank verified records with deterministic, explainable token matching."""
 
     query_tokens = _tokens(query)
-    course_tokens = _tokens(profile.active_course)
     goal_tokens = _tokens(profile.learning_goal)
     major = profile.engineering_major.lower()
     level_tokens = _tokens(profile.academic_level)
@@ -273,11 +272,6 @@ def recommend_resources(
         if topic_matches:
             score += min(30, 8 * len(topic_matches))
             reasons.append("topic match: " + ", ".join(topic_matches[:3]))
-
-        course_matches = sorted(course_tokens & searchable)
-        if course_matches:
-            score += min(15, 5 * len(course_matches))
-            reasons.append("active-course match")
 
         compatible_majors = {item.lower() for item in resource.engineering_majors}
         if major in compatible_majors or "general engineering" in compatible_majors:
