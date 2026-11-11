@@ -16,6 +16,7 @@ import random
 import re
 import shutil
 import subprocess
+import sys
 import threading
 import tkinter as tk
 from dataclasses import dataclass
@@ -42,12 +43,24 @@ from meta_education_service import (
 )
 from resource_catalog import RESOURCES, format_recommendations, recommend_resources
 from markdown_renderer import RenderToken, parse_markdown
+from knowledge_base import approved_source_urls
 
 
 try:
     from dotenv import load_dotenv
 
-    load_dotenv(Path(__file__).with_name(".env"))
+    # Source checkouts may use a local, gitignored .env. Packaged builds use a
+    # user-owned file outside the application bundle. Existing environment
+    # variables always take precedence.
+    load_dotenv(Path(__file__).with_name(".env"), override=False)
+    load_dotenv(
+        Path.home()
+        / "Library"
+        / "Application Support"
+        / "AI Education Agent"
+        / "config.env",
+        override=False,
+    )
 except ImportError:
     pass
 
@@ -1127,7 +1140,7 @@ class EducationAgentApp(tk.Tk):
         activity = (
             "Generating and checking a hint"
             if target_agent == "Problem-Solving Agent"
-            else "Streaming from Meta Model API"
+            else "Harness: analyze → ground → draft → verify → release"
         )
         self.status_var.set(
             f"{activity} • {self.meta_model} • limit {self.max_completion_tokens} tokens"
@@ -1136,13 +1149,17 @@ class EducationAgentApp(tk.Tk):
         service = self.meta_education_service
         # The current user turn was appended before this method was called.
         history = tuple(self.session_messages[target_agent][:-1])
-        buffer_before_display = target_agent == "Problem-Solving Agent"
-        allowed_resource_urls = {resource.url for resource in RESOURCES}
+        # Both workflows are release-gated: no unchecked provider text is shown.
+        buffer_before_display = True
+        allowed_resource_urls = {
+            *(resource.url for resource in RESOURCES),
+            *approved_source_urls(),
+        }
 
         def worker() -> None:
             try:
                 if target_agent == "Tutor Agent":
-                    chunks = service.stream_tutor_reply(
+                    chunks = service.stream_harnessed_tutor_reply(
                         self.student_profile, message, history
                     )
                 else:
@@ -1217,7 +1234,14 @@ class EducationAgentApp(tk.Tk):
                         assembled += "\n\n" + format_recommendations(recommendations)
                     bubble.set_content(assembled, markdown=True)
                     self.session_messages[target_agent].append(("ai", assembled))
-                    self.status_var.set(self._base_status())
+                    trace = service.last_tutor_trace if target_agent == "Tutor Agent" else None
+                    if trace:
+                        revision = "revised once" if trace.revised else "draft passed"
+                        self.status_var.set(
+                            f"Tutor harness released • coverage gate {trace.final_score}/100 • {revision}"
+                        )
+                    else:
+                        self.status_var.set(self._base_status())
                     finished = True
             if finished:
                 self.streaming_job = None
@@ -1463,7 +1487,49 @@ class EducationAgentApp(tk.Tk):
         self.destroy()
 
 
+def _run_packaged_self_test() -> None:
+    """Exercise frozen runtime dependencies without network or credentials."""
+
+    from PIL import Image
+    from docx import Document
+    from matplotlib.font_manager import FontProperties
+    from matplotlib.mathtext import math_to_image
+    from openai import OpenAI
+    from pypdf import PdfReader
+    from striprtf.striprtf import rtf_to_text
+
+    from education_harness import REQUIRED_SECTIONS, build_question_contract
+    from knowledge_base import find_concept_cards
+
+    assert Document and OpenAI and PdfReader and rtf_to_text
+    tokens = parse_markdown("## Check\n- **Force**: $F=ma$")
+    assert any(token.kind == "math_inline" for token in tokens)
+    buffer = io.BytesIO()
+    math_to_image(
+        r"$F=ma$",
+        buffer,
+        prop=FontProperties(size=12),
+        dpi=120,
+        format="png",
+    )
+    buffer.seek(0)
+    with Image.open(buffer) as rendered:
+        rendered.verify()
+    profile = StudentProfile(active_course="Thermodynamics")
+    cards = find_concept_cards("Explain the throttling process", profile.active_course)
+    contract = build_question_contract(profile, "Explain the throttling process", cards)
+    answer = MockEducationService().tutor_reply(
+        profile, "Explain the throttling process"
+    ).text
+    assert cards and contract.required_sections == REQUIRED_SECTIONS
+    assert all(section in answer for section in REQUIRED_SECTIONS)
+    assert recommend_resources("statics", profile, limit=1)
+
+
 def main() -> None:
+    if "--package-self-test" in sys.argv:
+        _run_packaged_self_test()
+        return
     app = EducationAgentApp()
     app.mainloop()
 

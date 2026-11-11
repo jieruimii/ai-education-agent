@@ -11,6 +11,7 @@ import re
 from dataclasses import dataclass
 from typing import Any, Iterable, Iterator, Protocol, Sequence
 
+from education_harness import HarnessTrace, TutorAnswerHarness
 from learning_core import (
     EducationTurn,
     ProblemSolvingSession,
@@ -115,6 +116,7 @@ class MetaEducationService:
     def __init__(self, transport: TextStreamTransport, *, max_tokens: int = 2048) -> None:
         self.transport = transport
         self.max_tokens = max_tokens
+        self.tutor_harness = TutorAnswerHarness(transport, max_tokens=max_tokens)
 
     def build_tutor_messages(
         self,
@@ -183,6 +185,22 @@ class MetaEducationService:
             max_tokens=self.max_tokens,
         )
 
+    def stream_harnessed_tutor_reply(
+        self,
+        profile: StudentProfile,
+        message: str,
+        history: Sequence[tuple[str, str]] = (),
+    ) -> Iterator[str]:
+        """Run the release-gated Tutor workflow and yield only its final answer."""
+
+        final, _trace = self.tutor_harness.run(profile, message, history)
+        if final:
+            yield final
+
+    @property
+    def last_tutor_trace(self) -> HarnessTrace | None:
+        return self.tutor_harness.last_trace
+
     def prepare_problem_turn(
         self,
         profile: StudentProfile,
@@ -227,6 +245,12 @@ class MetaEducationService:
         )
 
     def tutor_reply(self, profile: StudentProfile, message: str) -> EducationTurn:
+        """Compatibility helper for one raw provider turn.
+
+        The desktop application uses ``stream_harnessed_tutor_reply``. Keeping
+        this low-level seam makes transport behavior independently testable.
+        """
+
         text = "".join(self.stream_tutor_reply(profile, message)).strip()
         return EducationTurn(text=text, mock=False)
 

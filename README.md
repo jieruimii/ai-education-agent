@@ -6,6 +6,8 @@ A desktop prototype for instructor-governed AI learning support, built with Pyth
 
 - Student, TA, and Research Team role views
 - Tutor Agent for explanations and comprehension checks
+- Release-gated Tutor harness: analyze, ground, draft, evaluate, revise once, then display
+- Instructor-reviewable concept evidence with a throttling-process regression card
 - Hint-first Problem-Solving Agent with a four-stage workflow
 - Local attachment picker with provider upload disabled pending privacy approval
 - Complete worked solutions in Tutor mode; hint-only coaching in Problem-Solving mode
@@ -14,6 +16,22 @@ A desktop prototype for instructor-governed AI learning support, built with Pyth
 - Local mock responses or Muse Wonder streaming through Meta Model API
 - Rendered Markdown, headings, lists, code, and LaTeX math with responsive word wrapping
 - Light and dark modes
+
+## Answer-quality harness
+
+Live Tutor answers are no longer displayed directly from a single model call. Python builds a
+question contract, retrieves exact approved concept evidence, requests a structured explanation,
+checks it with a deterministic rubric and a schema-checked critic, and revises once when needed.
+Only the checked final text reaches the Tkinter chat.
+
+Run the offline quality regression suite:
+
+```bash
+python3 run_evals.py
+```
+
+See [docs/AGENT_HARNESS_DESIGN.md](docs/AGENT_HARNESS_DESIGN.md) for the workflow, limitations,
+and instructor-evaluation plan.
 
 ## Run in local mock mode
 
@@ -60,7 +78,8 @@ expression falls back to readable text instead of breaking the response stream.
 - Never commit `.env` or an API key.
 - The repository includes only `.env.example`.
 - Provider calls use low reasoning effort and a 2,048-token output cap by default.
-- Only the six most recent conversation turns are sent to the provider.
+- The legacy provider seam retains six turns; the harnessed Tutor path sends at most four prior turns.
+- Harnessed Tutor mode uses two model calls when the draft passes and up to three when one revision is required.
 - External file uploads are disabled; selected files remain on the device.
 - Direct-answer requests are answered in Tutor mode and refused only in Problem-Solving mode.
 

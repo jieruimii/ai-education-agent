@@ -306,8 +306,51 @@ def _worked_example(topic: str) -> str:
     )
 
 
+def _throttling_explanation() -> str:
+    """Instructor-reviewable mock answer for the meeting's regression case."""
+
+    return (
+        "A throttling process forces a flowing fluid through a restriction so its pressure drops; "
+        "under the standard valve assumptions, its specific enthalpy stays approximately constant.\n\n"
+        "## What it is\n"
+        "A throttle can be an expansion valve, capillary tube, porous plug, or pressure-reducing valve. "
+        "It controls pressure or flow. Unlike a turbine, it does not turn the pressure drop into useful shaft work.\n\n"
+        "## How it works\n"
+        "Upstream pressure pushes fluid through a narrow flow area. Viscous dissipation and mixing make "
+        "the process irreversible. Pressure falls across the restriction, while the entering and leaving "
+        "flow energy is accounted for through enthalpy. In refrigeration, the lower downstream saturation "
+        "temperature can make some liquid refrigerant flash into vapor.\n\n"
+        "## Governing equation\n"
+        "For one inlet and one outlet, the steady-flow energy equation is "
+        "$q-w_s=(h_2-h_1)+(V_2^2-V_1^2)/2+g(z_2-z_1)$. "
+        "If heat transfer, shaft work, and kinetic/potential-energy changes are negligible, it reduces to "
+        "$h_1\\approx h_2$. This is an isenthalpic—not necessarily isothermal—process.\n\n"
+        "## Assumptions and limits\n"
+        "The familiar $h_1\\approx h_2$ result assumes steady flow, one inlet and outlet, negligible heat "
+        "transfer, no shaft work, and negligible kinetic and potential energy changes. If a nozzle-like "
+        "velocity change or significant heat transfer exists, use the full energy balance.\n\n"
+        "## Concrete example\n"
+        "In a refrigerator, high-pressure liquid refrigerant crosses the expansion valve. Its pressure and "
+        "saturation temperature fall. At nearly constant enthalpy, part of the liquid flashes, leaving a cold "
+        "two-phase mixture that can absorb heat in the evaporator.\n\n"
+        "## Common misconception\n"
+        "Constant enthalpy does not guarantee constant temperature, and throttling is not isentropic. A real "
+        "adiabatic throttle is irreversible, so entropy increases. An ideal gas is a special case: because its "
+        "enthalpy depends mainly on temperature, the ideal-gas temperature is unchanged in this model.\n\n"
+        "## Check your understanding\n"
+        "Why can the refrigerant temperature fall after the valve even though $h_1\\approx h_2$?\n\n"
+        "Source: MIT Unified Engineering Thermodynamics, Chapter 4 — "
+        "https://ocw.mit.edu/ans7870/16/16.unified/thermoF03/chapter_4.htm"
+    )
+
+
 def tutor_response(profile: StudentProfile, message: str) -> str:
     topic = _topic_key(f"{profile.active_course} {message}")
+    normalized = message.lower()
+    if topic == "thermodynamics" and any(
+        term in normalized for term in ("throttl", "expansion valve", "pressure reducing valve")
+    ):
+        return _throttling_explanation()
     preference = profile.explanation_preference.lower()
     style = (
         "I will keep the explanation compact."

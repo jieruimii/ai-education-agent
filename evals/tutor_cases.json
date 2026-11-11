@@ -1,0 +1,22 @@
+[
+  {
+    "id": "thermo-throttling-depth",
+    "course": "Thermodynamics",
+    "question": "Explain the throttling process",
+    "must_include": [
+      "pressure drop",
+      "enthalpy",
+      "h_1\\approx h_2",
+      "irreversible",
+      "entropy increases",
+      "not necessarily isothermal",
+      "expansion valve"
+    ],
+    "must_not_include": [
+      "isentropic process",
+      "temperature is always constant",
+      "produces shaft work"
+    ],
+    "minimum_words": 180
+  }
+]
