@@ -7,9 +7,10 @@ A desktop prototype for instructor-governed AI learning support, built with Pyth
 - Student, TA, and Research Team role views
 - Tutor Agent for explanations and comprehension checks
 - Release-gated Tutor harness: analyze, ground, draft, evaluate, revise once, then display
-- Instructor-reviewable concept evidence with a throttling-process regression card
+- Instructor-reviewable concept evidence for throttling, supervised versus unsupervised learning, and Newton's first law
 - Question-first topic routing; no Active Course selector can bias an unrelated question
-- Reviewed comparison card for supervised versus unsupervised machine learning
+- Bounded Wikipedia research in Meta Mode, followed by evidence-bounded drafting and release checks
+- Visible action trace for classification, retrieval, quality checks, revision, and release
 - Hint-first Problem-Solving Agent with a four-stage workflow
 - Local attachment picker with provider upload disabled pending privacy approval
 - Complete worked solutions in Tutor mode; hint-only coaching in Problem-Solving mode
@@ -33,7 +34,8 @@ python3 run_evals.py
 ```
 
 See [docs/AGENT_HARNESS_DESIGN.md](docs/AGENT_HARNESS_DESIGN.md) for the workflow, limitations,
-and instructor-evaluation plan.
+and instructor-evaluation plan. See [docs/EVALUATION_STRATEGY.md](docs/EVALUATION_STRATEGY.md)
+for the HLE, MMLU, GAIA, BFCL, SWE-bench, GDPval, and AA-Briefcase evaluation map.
 
 ## Run in local mock mode
 
@@ -57,6 +59,7 @@ Add a valid key to `.env`:
 ```text
 MODEL_API_KEY=your_key_here
 AI_AGENT_MODE=meta
+ENABLE_WEB_RESEARCH=true
 ```
 
 Then run:
@@ -69,6 +72,8 @@ The status bar will show whether the app is using Meta Model API or local simula
 Live mode uses `https://api.meta.ai/v1`, the Responses API, and
 `muse-wonder-1.0` by default. Files remain local and are not included in Meta
 requests because a general provider retention period has not been verified.
+The displayed Agent activity panel reports observable actions and quality checks;
+it does not expose private model chain-of-thought.
 
 Model responses are rendered locally inside a read-only Tkinter text widget.
 Markdown formatting is styled rather than shown as raw punctuation; inline and

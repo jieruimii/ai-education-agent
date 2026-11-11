@@ -200,6 +200,17 @@ class TutorPersonalizationTests(unittest.TestCase):
         self.assertIn("target label", answer.lower())
         self.assertNotIn("two components both pass", answer.lower())
 
+    def test_newton_resources_do_not_fall_back_to_calculus(self):
+        profile = StudentProfile(
+            engineering_major="General Engineering",
+            active_course="MATH 407 • Probability Theory",
+        )
+        results = recommend_resources("Explain Newton's first law", profile, limit=3)
+        titles = [item.resource.title for item in results]
+        self.assertTrue(titles)
+        self.assertEqual(titles[0], "Engineering Mechanics")
+        self.assertFalse(any("Calculus" in title for title in titles))
+
 
 class ResourceCatalogTests(unittest.TestCase):
     def test_catalog_size_and_metadata(self):

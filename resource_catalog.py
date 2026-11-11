@@ -218,6 +218,8 @@ _SYNONYMS: dict[str, tuple[str, ...]] = {
     "fluids": ("fluid", "flow", "pressure", "control", "volume"),
     "probability": ("statistics", "random", "machine", "learning"),
     "aerospace": ("aerodynamics", "flight", "structures", "dynamics"),
+    "newton": ("mechanics", "forces", "motion", "dynamics"),
+    "inertia": ("mechanics", "motion", "dynamics"),
 }
 
 
@@ -269,9 +271,10 @@ def recommend_resources(
         score = 0
 
         topic_matches = sorted(query_tokens & searchable)
-        if topic_matches:
-            score += min(30, 8 * len(topic_matches))
-            reasons.append("topic match: " + ", ".join(topic_matches[:3]))
+        if not topic_matches:
+            continue
+        score += min(30, 8 * len(topic_matches))
+        reasons.append("topic match: " + ", ".join(topic_matches[:3]))
 
         compatible_majors = {item.lower() for item in resource.engineering_majors}
         if major in compatible_majors or "general engineering" in compatible_majors:

@@ -1,0 +1,32 @@
+[
+  {
+    "id": "local-tutor-regressions",
+    "scope": "subject routing, grounded explanations, misconceptions, resource relevance",
+    "runnable_now": true,
+    "command": "python3 run_evals.py"
+  },
+  {
+    "id": "hle-stem-humanities",
+    "scope": "advanced closed-ended multidisciplinary knowledge",
+    "runnable_now": false,
+    "reason": "Official benchmark data and grading are not bundled."
+  },
+  {
+    "id": "bfcl",
+    "scope": "function selection, arguments, relevance detection, and multi-turn tool use",
+    "runnable_now": false,
+    "reason": "The official harness is not bundled; local trajectory tests cover the current tool surface."
+  },
+  {
+    "id": "gdpval",
+    "scope": "professional work-product capability",
+    "runnable_now": false,
+    "reason": "Not a direct tutor benchmark; requires its separate task artifacts and grader."
+  },
+  {
+    "id": "aa-briefcase",
+    "scope": "agentic work over office files",
+    "runnable_now": false,
+    "reason": "Private external evaluation data is not bundled."
+  }
+]

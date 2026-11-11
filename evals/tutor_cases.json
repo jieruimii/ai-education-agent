@@ -36,5 +36,24 @@
       "probability distribution is the main difference"
     ],
     "minimum_words": 180
+  },
+  {
+    "id": "physics-newton-first-law-depth",
+    "course": "General Engineering",
+    "question": "Explain what is Newton's 1st law",
+    "must_include": [
+      "law of inertia",
+      "net external force",
+      "constant velocity",
+      "inertial reference frame",
+      "normal force",
+      "zero net force does not mean no forces"
+    ],
+    "must_not_include": [
+      "force is required to keep an object moving",
+      "all forces must be absent",
+      "probability theory"
+    ],
+    "minimum_words": 180
   }
 ]

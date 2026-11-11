@@ -62,10 +62,17 @@ META_BASE_URL=https://api.meta.ai/v1
 META_MODEL=muse-wonder-1.0
 META_MAX_COMPLETION_TOKENS=2048
 AI_AGENT_MODE=meta
+ENABLE_WEB_RESEARCH=true
 ```
 
 Quit and reopen the app. Never email, commit, or put this configuration inside
 the `.app` or ZIP. Change `AI_AGENT_MODE=mock` to return to Mock Mode.
+
+In Meta Mode, the Tutor shows a compact **Agent activity** trace: detected
+subject and intent, evidence tools used, quality checks, revisions, and the
+release score. This is an auditable action trace, not the model's private
+chain-of-thought. Online retrieval is restricted to Wikipedia's public API;
+reviewed local concept cards remain the preferred evidence when available.
 
 ## Privacy and compatibility
 

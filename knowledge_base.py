@@ -113,7 +113,30 @@ SUPERVISED_VS_UNSUPERVISED = ConceptCard(
 )
 
 
-CONCEPT_CARDS = (THROTTLING, SUPERVISED_VS_UNSUPERVISED)
+NEWTON_FIRST_LAW = ConceptCard(
+    card_id="physics.newton-first-law.v1",
+    title="Newton's first law of motion",
+    aliases=("newton's 1st law", "newtons 1st law", "newton's first law", "newtons first law", "law of inertia"),
+    claims=(
+        "An object remains at rest or continues with constant velocity in a straight line unless a nonzero net external force acts on it.",
+        "The law describes inertial reference frames and is often called the law of inertia.",
+        "Constant velocity includes zero velocity, so rest and uniform straight-line motion are the same kind of state dynamically.",
+        "Forces may be present and cancel; the law requires zero net force, not zero individual forces.",
+        "A change in speed or direction is acceleration and therefore requires a nonzero net force in an inertial frame.",
+    ),
+    equations=("If ΣF_ext = 0, then a = 0 and velocity v is constant.",),
+    assumptions=("an inertial reference frame", "the object is modeled with a well-defined net external force"),
+    misconceptions=(
+        "Motion does not require a continuing net force; a net force is required to change velocity.",
+        "Zero net force does not mean no forces are present; balanced forces sum to zero.",
+    ),
+    example=("A book at rest has gravity downward and a normal force upward; the forces balance, so its acceleration is zero."),
+    source_title="OpenStax University Physics, Newton's First Law",
+    source_url="https://openstax.org/books/university-physics-volume-1/pages/5-2-newtons-first-law",
+)
+
+
+CONCEPT_CARDS = (THROTTLING, SUPERVISED_VS_UNSUPERVISED, NEWTON_FIRST_LAW)
 
 
 def _normalized(text: str) -> str:

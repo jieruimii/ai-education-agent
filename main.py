@@ -516,6 +516,13 @@ class EducationAgentApp(tk.Tk):
             value = default
         return min(max(value, minimum), maximum)
 
+    @staticmethod
+    def _env_enabled(name: str, *, default: bool = False) -> bool:
+        value = os.getenv(name)
+        if value is None:
+            return default
+        return value.strip().lower() in {"1", "true", "yes", "on"}
+
     def _configure_provider(self) -> None:
         mode = os.getenv("AI_AGENT_MODE", "auto").strip().lower()
         api_key = os.getenv("MODEL_API_KEY", os.getenv("LLAMA_API_KEY", "")).strip()
@@ -528,6 +535,9 @@ class EducationAgentApp(tk.Tk):
             self.meta_education_service = MetaEducationService(
                 self.meta_service,
                 max_tokens=self.max_completion_tokens,
+                enable_web_research=self._env_enabled(
+                    "ENABLE_WEB_RESEARCH", default=True
+                ),
             )
         except RuntimeError as exc:
             self.provider_error = str(exc)
@@ -1149,12 +1159,16 @@ class EducationAgentApp(tk.Tk):
             *(resource.url for resource in RESOURCES),
             *approved_source_urls(),
         }
+        activity_lines: list[str] = []
 
         def worker() -> None:
             try:
                 if target_agent == "Tutor Agent":
                     chunks = service.stream_harnessed_tutor_reply(
-                        self.student_profile, message, history
+                        self.student_profile,
+                        message,
+                        history,
+                        progress=lambda event: events.put(("trace", event)),
                     )
                 else:
                     if directive is None:
@@ -1191,6 +1205,13 @@ class EducationAgentApp(tk.Tk):
                         visible, _ = filter_provider_urls(assembled, allowed_resource_urls)
                         bubble.set_content(visible, markdown=True, streaming=True)
                         self.chat_scroll.scroll_to_bottom()
+                elif kind == "trace":
+                    activity_lines.append(value)
+                    visible_activity = "### Agent activity\n" + "\n".join(
+                        f"- {line}" for line in activity_lines
+                    )
+                    bubble.set_content(visible_activity, markdown=True, streaming=True)
+                    self.chat_scroll.scroll_to_bottom()
                 elif kind == "error":
                     assembled = value
                     bubble.set_content(assembled, markdown=True)
@@ -1213,6 +1234,9 @@ class EducationAgentApp(tk.Tk):
                             ))
                     else:
                         assembled = assembled.strip() or "Meta returned an empty response. Please try again."
+                    trace = service.last_tutor_trace if target_agent == "Tutor Agent" else None
+                    if trace:
+                        allowed_resource_urls.update(trace.source_urls)
                     assembled, links_removed = filter_provider_urls(
                         assembled, allowed_resource_urls
                     )
@@ -1226,9 +1250,12 @@ class EducationAgentApp(tk.Tk):
                     )
                     if recommendations:
                         assembled += "\n\n" + format_recommendations(recommendations)
+                    if activity_lines:
+                        assembled += "\n\n### Agent activity\n" + "\n".join(
+                            f"- {line}" for line in activity_lines
+                        )
                     bubble.set_content(assembled, markdown=True)
                     self.session_messages[target_agent].append(("ai", assembled))
-                    trace = service.last_tutor_trace if target_agent == "Tutor Agent" else None
                     if trace:
                         revision = "revised once" if trace.revised else "draft passed"
                         self.status_var.set(

@@ -9,9 +9,10 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
-from typing import Any, Iterable, Iterator, Protocol, Sequence
+from typing import Any, Callable, Iterable, Iterator, Protocol, Sequence
 
 from education_harness import HarnessTrace, TutorAnswerHarness
+from research_tools import WikipediaResearchTool
 from learning_core import (
     EducationTurn,
     ProblemSolvingSession,
@@ -112,10 +113,21 @@ def _history_items(history: Sequence[tuple[str, str]]) -> list[dict[str, str]]:
 class MetaEducationService:
     """EducationService implementation backed by a text-only Meta transport."""
 
-    def __init__(self, transport: TextStreamTransport, *, max_tokens: int = 2048) -> None:
+    def __init__(
+        self,
+        transport: TextStreamTransport,
+        *,
+        max_tokens: int = 2048,
+        enable_web_research: bool = False,
+    ) -> None:
         self.transport = transport
         self.max_tokens = max_tokens
-        self.tutor_harness = TutorAnswerHarness(transport, max_tokens=max_tokens)
+        researcher = WikipediaResearchTool() if enable_web_research else None
+        self.tutor_harness = TutorAnswerHarness(
+            transport,
+            max_tokens=max_tokens,
+            researcher=researcher,
+        )
 
     def build_tutor_messages(
         self,
@@ -189,10 +201,16 @@ class MetaEducationService:
         profile: StudentProfile,
         message: str,
         history: Sequence[tuple[str, str]] = (),
+        progress: Callable[[str], None] | None = None,
     ) -> Iterator[str]:
         """Run the release-gated Tutor workflow and yield only its final answer."""
 
-        final, _trace = self.tutor_harness.run(profile, message, history)
+        final, _trace = self.tutor_harness.run(
+            profile,
+            message,
+            history,
+            progress=progress,
+        )
         if final:
             yield final
 

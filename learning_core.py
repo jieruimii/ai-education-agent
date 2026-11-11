@@ -192,6 +192,8 @@ def _attempt_quality(message: str) -> str:
 
 def _topic_key(text: str) -> str:
     normalized = text.lower()
+    if _has_any(normalized, ("newton's first law", "newtons first law", "newton's 1st law", "newtons 1st law", "law of inertia")):
+        return "newton first law"
     if _has_any(normalized, ("machine learning", "supervised", "unsupervised", "classification", "clustering")):
         return "machine learning"
     if _has_any(normalized, ("moment", "reaction", "beam", "free-body", "free body", "statics")):
@@ -277,6 +279,11 @@ def _profile_framing(profile: StudentProfile) -> str:
 
 
 def _worked_example(topic: str) -> str:
+    if topic == "newton first law":
+        return (
+            "Worked example: a book resting on a table has gravity downward and an equal normal force "
+            "upward. The net external force is zero, so its acceleration is zero and it remains at rest."
+        )
     if topic == "statics":
         return (
             "Worked practice example: a simply supported 4 m beam carries a centered 10 kN load. "
@@ -388,11 +395,27 @@ def _machine_learning_comparison() -> str:
     )
 
 
+def _newton_first_law_explanation() -> str:
+    return (
+        "Newton's first law says that an object's velocity stays constant—including remaining at rest—unless a nonzero net external force changes it.\n\n"
+        "## What it is\nIt is the law of inertia: objects do not spontaneously change their speed or direction.\n\n"
+        "## How it works\nIf all external forces balance, there is no acceleration. The object remains at rest or moves in a straight line at constant speed.\n\n"
+        "## Governing equation\nIf $\\sum \\vec{F}_{ext}=0$, then $\\vec{a}=0$ and velocity $\\vec{v}$ is constant.\n\n"
+        "## Assumptions and limits\nThis statement is made in an inertial reference frame. In an accelerating frame, apparent or fictitious forces may be needed.\n\n"
+        "## Concrete example\nA book on a table has gravity downward and a normal force upward. They cancel, so the book has zero acceleration.\n\n"
+        "## Common misconception\nZero net force does not mean no forces exist, and an object does not need a continuing force to keep moving at constant velocity.\n\n"
+        "## Check your understanding\nA puck slides at constant velocity on nearly frictionless ice. What is the net horizontal force on it?\n\n"
+        "Source: OpenStax University Physics, Newton's First Law — https://openstax.org/books/university-physics-volume-1/pages/5-2-newtons-first-law"
+    )
+
+
 def tutor_response(profile: StudentProfile, message: str) -> str:
     # The current question is authoritative. Profile fields personalize style,
     # but must never override or contaminate topic routing.
     topic = _topic_key(message)
     normalized = message.lower()
+    if topic == "newton first law":
+        return _newton_first_law_explanation()
     if topic == "thermodynamics" and any(
         term in normalized for term in ("throttl", "expansion valve", "pressure reducing valve")
     ):

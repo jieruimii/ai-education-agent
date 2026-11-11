@@ -16,6 +16,7 @@ from education_harness import (  # noqa: E402
 )
 from knowledge_base import find_concept_cards  # noqa: E402
 from learning_core import MockEducationService, StudentProfile  # noqa: E402
+from research_tools import WebEvidence, classify_subject  # noqa: E402
 
 
 def holistic_throttle_answer() -> str:
@@ -61,6 +62,17 @@ class ScriptedTransport:
         self.calls.append({"messages": messages, "max_tokens": max_tokens})
         response = self.responses.pop(0)
         yield response
+
+
+class FakeResearcher:
+    def search(self, question, subject):
+        return (
+            WebEvidence(
+                title="Newton's laws of motion",
+                url="https://en.wikipedia.org/wiki/Newton%27s_laws_of_motion",
+                excerpt="The first law describes inertia and constant velocity when net force is zero.",
+            ),
+        )
 
 
 class HarnessContractTests(unittest.TestCase):
@@ -147,6 +159,46 @@ class HarnessContractTests(unittest.TestCase):
         self.assertIn("target label", answer.lower())
         self.assertIn("unsupervised clustering", answer.lower())
         self.assertNotIn("both pass with probability", answer.lower())
+
+    def test_newton_question_routes_to_physics_and_holistic_mock_answer(self):
+        question = "Explain what is Newton's 1st law"
+        cards = find_concept_cards(question)
+        contract = build_question_contract(self.profile, question, cards)
+        self.assertEqual(contract.subject, "physics")
+        self.assertEqual(cards[0].card_id, "physics.newton-first-law.v1")
+        answer = MockEducationService().tutor_reply(self.profile, question).text
+        for section in REQUIRED_SECTIONS:
+            self.assertIn(section, answer)
+        self.assertIn("net external force", answer.lower())
+        self.assertIn("inertial reference frame", answer.lower())
+        self.assertIn("openstax.org", answer.lower())
+
+    def test_research_tool_events_are_observable_without_private_reasoning(self):
+        question = "Explain what is Newton's 1st law"
+        draft = MockEducationService().tutor_reply(self.profile, question).text
+        transport = ScriptedTransport((draft, '{"pass": true, "feedback": ""}'))
+        events = []
+        final, trace = TutorAnswerHarness(
+            transport, researcher=FakeResearcher()
+        ).run(self.profile, question, progress=events.append)
+        self.assertEqual(final, draft)
+        self.assertEqual(trace.subject, "physics")
+        self.assertIn("https://en.wikipedia.org/wiki/Newton%27s_laws_of_motion", trace.source_urls)
+        self.assertTrue(any("Classified subject: physics" in event for event in events))
+        self.assertTrue(any("retrieved 1 source" in event for event in events))
+        self.assertTrue(any("Release gate" in event for event in events))
+
+    def test_subject_classifier_covers_cross_disciplinary_questions(self):
+        cases = {
+            "Evaluate this integral": "mathematics",
+            "Explain an acid-base reaction": "chemistry",
+            "Analyze the metaphor in this poem": "literature",
+            "Why did this empire collapse in history?": "history",
+            "Compare supervised and unsupervised machine learning": "computer science",
+        }
+        for question, expected in cases.items():
+            with self.subTest(question=question):
+                self.assertEqual(classify_subject(question), expected)
 
 
 if __name__ == "__main__":
