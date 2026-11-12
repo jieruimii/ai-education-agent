@@ -4,7 +4,7 @@ A desktop prototype for instructor-governed AI learning support, built with Pyth
 
 ## Features
 
-- Student, TA, and Research Team role views
+- Focused student learning workspace
 - Tutor Agent for explanations and comprehension checks
 - Release-gated Tutor harness: analyze, ground, draft, evaluate, revise once, then display
 - Instructor-reviewable concept evidence for physics, thermodynamics, mathematics, chemistry, computer science, literature, and history
@@ -14,8 +14,7 @@ A desktop prototype for instructor-governed AI learning support, built with Pyth
 - Hint-first Problem-Solving Agent with a four-stage workflow
 - Local attachment picker with provider upload disabled pending privacy approval
 - Complete worked solutions in Tutor mode; hint-only coaching in Problem-Solving mode
-- Direct-answer refusal and TA flag review
-- Cross-course telemetry and prompt-governance controls
+- Direct-answer safeguards in the Problem-Solving Agent
 - Local mock responses or Muse Wonder streaming through Meta Model API
 - Rendered Markdown, headings, lists, code, and LaTeX math with responsive word wrapping
 - Light and dark modes

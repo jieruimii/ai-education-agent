@@ -4,6 +4,9 @@ This package contains the standalone `AI_Education_Agent.app` desktop prototype
 for Professor Penkova. It was built for Apple Silicon Macs and does not require
 Python to be installed.
 
+The interface is intentionally student-only; the former TA review and Research
+Team dashboards are not included.
+
 ## Start in Mock Mode
 
 1. Unzip the package.
