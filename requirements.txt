@@ -5,3 +5,5 @@ pypdf>=5.0.0,<7.0.0
 striprtf>=0.0.28,<1.0.0
 matplotlib>=3.8,<4.0
 Pillow>=10.0,<13.0
+sympy==1.14.0
+pint==0.26.2

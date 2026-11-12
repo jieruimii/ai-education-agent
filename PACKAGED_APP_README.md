@@ -17,6 +17,9 @@ Mock Mode is the safe default when no Meta configuration is present. It makes
 no external model request. The Tutor Agent includes a detailed offline
 throttling explanation for the meeting regression case. Problem-Solving mode,
 student profiles, verified recommendations, Markdown, and LaTeX remain available.
+The **Verified Math Solver** includes a reviewed local RLC demonstration in Mock
+Mode. In Meta Mode it requires a Muse function call before executing
+AST-validated SymPy/Pint code and releasing a numerical result.
 
 ## Tutor answer-quality harness
 

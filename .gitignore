@@ -1,5 +1,6 @@
 .env
 .venv/
+.math-backend-venv/
 __pycache__/
 *.pyc
 dist/

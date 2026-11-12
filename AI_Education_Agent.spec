@@ -4,7 +4,7 @@ from PyInstaller.utils.hooks import collect_all
 datas = []
 binaries = []
 hiddenimports = ['dotenv', 'docx', 'pypdf', 'striprtf.striprtf']
-for package in ('openai', 'matplotlib', 'PIL'):
+for package in ('openai', 'matplotlib', 'PIL', 'sympy', 'pint'):
     package_datas, package_binaries, package_imports = collect_all(package)
     datas += package_datas
     binaries += package_binaries

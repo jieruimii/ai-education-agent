@@ -12,6 +12,8 @@ A desktop prototype for instructor-governed AI learning support, built with Pyth
 - Bounded Wikipedia research in Meta Mode, followed by evidence-bounded drafting and release checks
 - Visible action trace for classification, retrieval, quality checks, revision, and release
 - Hint-first Problem-Solving Agent with a four-stage workflow
+- Verified Math Solver with SymPy symbolic execution, Pint dimensional checks,
+  explicit angle handling, significant figures, and bounded script correction
 - Local attachment picker with provider upload disabled pending privacy approval
 - Complete worked solutions in Tutor mode; hint-only coaching in Problem-Solving mode
 - Direct-answer safeguards in the Problem-Solving Agent
@@ -31,6 +33,18 @@ visible text, the harness retries it once with a larger allowance and then safel
 the deterministic release rubric instead of aborting the student answer. The UI reports separate
 automated checks for correctness/evidence agreement, grounding, directness, tool precision, and
 reliability. These are harness diagnostics, not official benchmark or ground-truth scores.
+
+## Deterministic engineering mathematics backend
+
+`backend/math_verification/` contains a separate FastAPI service for symbolic
+engineering calculations. It requires the model to call an AST-validated
+SymPy/Pint worker, enforces dimensional and angle checks, retries bounded script
+failures, and releases only explanations grounded in the worker's exact output.
+The Tkinter Student workspace exposes the same engine as **Verified Math
+Solver**. Meta Mode uses the existing Muse configuration to parse problems and
+call the deterministic tool; Mock Mode includes a reviewed local second-order
+RLC demonstration. See `backend/math_verification/README.md` for the standalone
+FastAPI configuration and launch instructions.
 
 Run the offline quality regression suite:
 

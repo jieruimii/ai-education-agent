@@ -43,6 +43,16 @@ from meta_education_service import (
 from resource_catalog import RESOURCES, format_recommendations, recommend_resources
 from markdown_renderer import RenderToken, parse_markdown
 from knowledge_base import approved_source_urls
+from backend.math_verification.agent_pipeline import (
+    MathAgentPipeline,
+    OpenAIResponsesProvider,
+    PipelineError,
+)
+from backend.math_verification.examples import (
+    RLC_PROBLEM,
+    render_reviewed_rlc_answer,
+    solve_reviewed_rlc_example,
+)
 
 
 try:
@@ -65,7 +75,7 @@ except ImportError:
 
 
 APP_TITLE = "AI Education Agent"
-AGENTS = ("Tutor Agent", "Problem-Solving Agent")
+AGENTS = ("Tutor Agent", "Problem-Solving Agent", "Verified Math Solver")
 WORKFLOW_STAGES = ("Diagnose", "Design Hint", "Gather Report", "Iterate")
 MAX_ATTACHMENTS = 10
 MAX_ATTACHMENT_BYTES = 1024 * 1024 * 1024
@@ -458,6 +468,7 @@ class EducationAgentApp(tk.Tk):
 
         self.meta_service: Optional[MetaModelService] = None
         self.meta_education_service: Optional[MetaEducationService] = None
+        self.math_pipeline: Optional[MathAgentPipeline] = None
         self.meta_model = os.getenv(
             "META_MODEL", os.getenv("LLAMA_MODEL", DEFAULT_META_MODEL)
         ).strip()
@@ -473,6 +484,7 @@ class EducationAgentApp(tk.Tk):
         self.profile_level_var = tk.StringVar(value=self.student_profile.academic_level)
         self.profile_goal_var = tk.StringVar(value=self.student_profile.learning_goal)
         self.profile_preference_var = tk.StringVar(value=self.student_profile.explanation_preference)
+        self.math_sig_figs_var = tk.IntVar(value=4)
         for variable in (
             self.profile_major_var,
             self.profile_level_var,
@@ -516,6 +528,16 @@ class EducationAgentApp(tk.Tk):
                 enable_web_research=self._env_enabled(
                     "ENABLE_WEB_RESEARCH", default=True
                 ),
+            )
+            math_provider = OpenAIResponsesProvider(
+                client=self.meta_service.client,
+                model=self.meta_model,
+            )
+            self.math_pipeline = MathAgentPipeline(
+                provider=math_provider,
+                provider_name="Meta Responses API",
+                model=self.meta_model,
+                max_tool_attempts=3,
             )
         except RuntimeError as exc:
             self.provider_error = str(exc)
@@ -626,6 +648,7 @@ class EducationAgentApp(tk.Tk):
         agent_details = {
             "Tutor Agent": ("◎  Tutor Agent", "Concepts • review • questions"),
             "Problem-Solving Agent": ("◇  Problem Solver", "Hint-first guided workflow"),
+            "Verified Math Solver": ("∑  Verified Math", "SymPy • Pint • unit checks"),
         }
         for agent, (label, detail) in agent_details.items():
             wrap = tk.Frame(sidebar, bg=p["surface"])
@@ -666,7 +689,7 @@ class EducationAgentApp(tk.Tk):
                         highlightthickness=1, highlightbackground=p["border"])
         goal.pack(fill="x", padx=18, ipady=5)
 
-        tk.Label(sidebar, text="✓ Local personalized mock\n✓ Verified university links\n✓ Responses logged",
+        tk.Label(sidebar, text="✓ Local personalized mock\n✓ Verified university links\n✓ Deterministic unit checks",
                  justify="left", font=("Helvetica", 8), fg=p["success"],
                  bg=p["surface"]).pack(anchor="w", padx=18, pady=(12, 6))
 
@@ -703,11 +726,19 @@ class EducationAgentApp(tk.Tk):
 
         top = tk.Frame(self.chat_card, bg=p["surface"])
         top.pack(fill="x", padx=20, pady=(16, 12))
-        icon = "◎" if self.active_agent == "Tutor Agent" else "◇"
+        icon = {
+            "Tutor Agent": "◎",
+            "Problem-Solving Agent": "◇",
+            "Verified Math Solver": "∑",
+        }[self.active_agent]
         title = self.active_agent
-        subtitle = ("Explains concepts and can provide complete worked solutions"
-                    if self.active_agent == "Tutor Agent"
-                    else "Guides your reasoning without revealing graded answers")
+        subtitle = {
+            "Tutor Agent": "Explains concepts and can provide complete worked solutions",
+            "Problem-Solving Agent": "Guides your reasoning without revealing graded answers",
+            "Verified Math Solver": (
+                "Executes symbolic math and unit conversions with SymPy and Pint"
+            ),
+        }[self.active_agent]
         tk.Label(top, text=f"{icon}  {title}", font=("Helvetica", 15, "bold"),
                  fg=p["text"], bg=p["surface"]).pack(side="left")
         tk.Button(top, text="New session", bd=0, cursor="hand2", padx=12, pady=7,
@@ -715,6 +746,39 @@ class EducationAgentApp(tk.Tk):
                   activebackground=p["border"], command=self._new_session).pack(side="right")
         tk.Label(self.chat_card, text=subtitle, font=("Helvetica", 9),
                  fg=p["muted"], bg=p["surface"]).pack(anchor="w", padx=22, pady=(0, 10))
+
+        if self.active_agent == "Verified Math Solver":
+            math_controls = tk.Frame(self.chat_card, bg=p["surface_alt"])
+            math_controls.pack(fill="x", padx=20, pady=(0, 10))
+            tk.Label(
+                math_controls,
+                text="Significant figures",
+                font=("Helvetica", 9, "bold"),
+                fg=p["text"],
+                bg=p["surface_alt"],
+            ).pack(side="left", padx=(12, 8), pady=8)
+            tk.Spinbox(
+                math_controls,
+                from_=2,
+                to=8,
+                width=4,
+                textvariable=self.math_sig_figs_var,
+                bg=p["surface"],
+                fg=p["text"],
+                buttonbackground=p["surface_alt"],
+            ).pack(side="left", pady=8)
+            tk.Button(
+                math_controls,
+                text="Load RLC example",
+                bd=0,
+                cursor="hand2",
+                padx=11,
+                pady=6,
+                font=("Helvetica", 9, "bold"),
+                bg=p["accent_soft"],
+                fg=p["accent"],
+                command=self._load_rlc_example,
+            ).pack(side="right", padx=10, pady=6)
 
         if self.active_agent == "Problem-Solving Agent":
             self.workflow_bar = tk.Frame(self.chat_card, bg=p["surface_alt"])
@@ -730,13 +794,24 @@ class EducationAgentApp(tk.Tk):
 
         messages = self.session_messages[self.active_agent]
         if not messages:
-            welcome = ("Hi! I’m your Tutor Agent. Ask a question or upload a PDF, TXT, Word document, "
-                       "image, or other course file. In mock mode I provide clearly labeled, profile-aware "
-                       "engineering explanations and worked practice examples."
-                       if self.active_agent == "Tutor Agent" else
-                       "Hi! We begin at Diagnose. Describe the problem, known information, unknown variable, "
-                       "and anything you have tried. I will then design a progressive hint, gather your "
-                       "report, and iterate without giving the final answer.")
+            welcome_messages = {
+                "Tutor Agent": (
+                    "Hi! I’m your Tutor Agent. Ask a question or upload a PDF, TXT, Word document, "
+                    "image, or other course file. In mock mode I provide clearly labeled, profile-aware "
+                    "engineering explanations and worked practice examples."
+                ),
+                "Problem-Solving Agent": (
+                    "Hi! We begin at Diagnose. Describe the problem, known information, unknown variable, "
+                    "and anything you have tried. I will then design a progressive hint, gather your "
+                    "report, and iterate without giving the final answer."
+                ),
+                "Verified Math Solver": (
+                    "Enter an engineering calculation in words. I will parse the knowns, unknowns, "
+                    "governing equations, and units; execute approved SymPy/Pint code; then release only "
+                    "the verified result. Mock Mode supports the reviewed RLC demonstration."
+                ),
+            }
+            welcome = welcome_messages[self.active_agent]
             self.session_messages[self.active_agent].append(("ai", welcome))
             messages = self.session_messages[self.active_agent]
         for sender, text in messages:
@@ -799,6 +874,13 @@ class EducationAgentApp(tk.Tk):
         else:
             self.workflow_index = 0
         self._render_agent_panel()
+
+    def _load_rlc_example(self) -> None:
+        if self.active_agent != "Verified Math Solver":
+            return
+        self.message_entry.delete("1.0", "end")
+        self.message_entry.insert("1.0", RLC_PROBLEM)
+        self.message_entry.focus_set()
 
     @staticmethod
     def _format_bytes(size: int) -> str:
@@ -911,7 +993,27 @@ class EducationAgentApp(tk.Tk):
         self._add_bubble("user", display_message)
 
         flagged, reason = self._detect_flag(message)
-        if self.meta_education_service and not attachments:
+        if self.active_agent == "Verified Math Solver" and not attachments:
+            if self.math_pipeline:
+                self._stream_verified_math_response(message)
+            else:
+                normalized = message.lower()
+                if "rlc" in normalized or all(
+                    term in normalized for term in ("resistor", "inductor", "capacitor")
+                ):
+                    response = render_reviewed_rlc_answer(
+                        solve_reviewed_rlc_example(self._math_significant_figures())
+                    )
+                else:
+                    response = (
+                        "### Mock Mode limitation\n"
+                        "The deterministic engine will not guess a symbolic translation without a "
+                        "configured model. In Mock Mode, select **Load RLC example** to run the "
+                        "reviewed local SymPy/Pint demonstration. Connect Meta Mode to parse other "
+                        "engineering problems."
+                    )
+                self._stream_response(response)
+        elif self.meta_education_service and not attachments:
             directive: EducationTurn | None = None
             if self.active_agent == "Problem-Solving Agent":
                 directive = self.meta_education_service.prepare_problem_turn(
@@ -943,10 +1045,18 @@ class EducationAgentApp(tk.Tk):
                 self._sync_workflow_index()
                 self._draw_workflow()
                 response = turn.text
-            recommendations = recommend_resources(message, self.student_profile, limit=3)
-            if recommendations:
-                response += "\n\n" + format_recommendations(recommendations)
+            if self.active_agent != "Verified Math Solver":
+                recommendations = recommend_resources(message, self.student_profile, limit=3)
+                if recommendations:
+                    response += "\n\n" + format_recommendations(recommendations)
             self._stream_response(response)
+
+    def _math_significant_figures(self) -> int:
+        try:
+            value = int(self.math_sig_figs_var.get())
+        except (TypeError, ValueError, tk.TclError):
+            value = 4
+        return min(max(value, 2), 8)
 
     @staticmethod
     def _detect_flag(message: str) -> tuple[bool, str]:
@@ -1042,6 +1152,101 @@ class EducationAgentApp(tk.Tk):
             self.streaming_job = self.after(65, write_chunk, index + 1, assembled)
 
         self.streaming_job = self.after(350, write_chunk)
+
+    def _stream_verified_math_response(self, message: str) -> None:
+        if not self.math_pipeline:
+            return
+        self.stream_generation += 1
+        generation = self.stream_generation
+        target_agent = self.active_agent
+        bubble = self._add_bubble(
+            "ai",
+            "### Verification activity\n"
+            "- Parsing knowns, unknowns, governing equations, and units\n"
+            "- Waiting for the deterministic SymPy/Pint tool call",
+        )
+        self.send_button.configure(state="disabled", text="Verifying…")
+        self.upload_button.configure(state="disabled")
+        self.status_var.set("Verified Math Solver • symbolic solve and dimensional checks")
+        events: queue.Queue[tuple[str, Any]] = queue.Queue()
+        pipeline = self.math_pipeline
+        significant_figures = self._math_significant_figures()
+        discipline = self.student_profile.engineering_major or "General Engineering"
+
+        def worker() -> None:
+            try:
+                outcome = pipeline.solve(
+                    problem=message,
+                    discipline=discipline,
+                    significant_figures=significant_figures,
+                )
+                events.put(("done", outcome))
+            except Exception as exc:
+                events.put(("error", exc))
+
+        threading.Thread(
+            target=worker,
+            daemon=True,
+            name="verified-math-solver",
+        ).start()
+
+        def poll() -> None:
+            if generation != self.stream_generation or not bubble.winfo_exists():
+                return
+            try:
+                kind, value = events.get_nowait()
+            except queue.Empty:
+                self.streaming_job = self.after(50, poll)
+                return
+
+            if kind == "error":
+                exc = value
+                if isinstance(exc, PipelineError):
+                    response = (
+                        "### Verification failed safely\n"
+                        f"{exc}\n\nNo unverified numerical answer was released."
+                    )
+                else:
+                    response = (
+                        "### Verification failed safely\n"
+                        f"The deterministic solver stopped ({type(exc).__name__}). "
+                        "No unverified numerical answer was released."
+                    )
+                bubble.set_content(response, markdown=True)
+                self.session_messages[target_agent].append(("ai", response))
+                self.status_var.set("Verified Math Solver stopped • no answer released")
+            else:
+                outcome = value
+                verification = outcome.verification
+                checks = "\n".join(
+                    f"- {item}" for item in verification.verification
+                ) or "- Sandbox completed its required checks."
+                activity = "\n".join(f"- {item}" for item in outcome.trace)
+                response = (
+                    f"{outcome.answer}\n\n"
+                    "### Deterministic verification report\n"
+                    f"- Status: {verification.status}\n"
+                    f"- Symbolic solution: `{verification.symbolic_solution}`\n"
+                    f"- Numerical result: {verification.numerical_result} "
+                    f"{verification.units or ''}\n"
+                    f"- Tool attempts: {outcome.tool_attempts}\n"
+                    f"{checks}\n\n"
+                    "### Agent activity\n"
+                    f"{activity}\n\n"
+                    "The activity log shows observable workflow events, not private chain-of-thought."
+                )
+                bubble.set_content(response, markdown=True)
+                self.session_messages[target_agent].append(("ai", response))
+                self.status_var.set(
+                    f"Verified Math released • {verification.numerical_result} "
+                    f"{verification.units or ''} • {outcome.tool_attempts} tool attempt(s)"
+                )
+
+            self.streaming_job = None
+            self.send_button.configure(state="normal", text="Send  ➜")
+            self.upload_button.configure(state="normal")
+
+        self.streaming_job = self.after(50, poll)
 
     def _stream_meta_education_response(
         self,
@@ -1271,9 +1476,17 @@ def _run_packaged_self_test() -> None:
     assert cards and contract.required_sections == REQUIRED_SECTIONS
     assert all(section in answer for section in REQUIRED_SECTIONS)
     assert recommend_resources("statics", profile, limit=1)
+    math_result = solve_reviewed_rlc_example(4)
+    assert math_result.status == "success"
+    assert math_result.units == "C"
+    assert math_result.numerical_result == "-0.005984"
 
 
 def main() -> None:
+    if "--math-sandbox-worker" in sys.argv:
+        from backend.math_verification.math_sandbox import _worker_main
+
+        raise SystemExit(_worker_main())
     if "--package-self-test" in sys.argv:
         _run_packaged_self_test()
         return

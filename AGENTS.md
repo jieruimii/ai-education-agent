@@ -23,6 +23,9 @@ This repository is the system of record for the Tkinter education-agent prototyp
 - `evals/`: versioned regression cases based on observed failures.
 - `tests/`: deterministic unit tests; no live API calls.
 - `docs/AGENT_HARNESS_DESIGN.md`: rationale, workflow, and evaluation plan.
+- `backend/math_verification/`: optional FastAPI service that confines engineering
+  calculations to an AST-validated SymPy/Pint worker and grounded tool loop;
+  the Student UI exposes it as Verified Math Solver.
 
 ## Verification commands
 
@@ -30,6 +33,7 @@ This repository is the system of record for the Tkinter education-agent prototyp
 python3 -m unittest discover -s tests -v
 python3 run_evals.py
 python3 -m py_compile *.py tests/*.py
+python3 -m unittest discover -s backend/math_verification/tests -v
 ```
 
 Live Meta evaluation is a separate, explicitly authorized activity because it may consume
