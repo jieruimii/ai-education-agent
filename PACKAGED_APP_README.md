@@ -24,9 +24,17 @@ In Meta Mode, Tutor responses pass through a single-agent workflow:
 Unchecked provider text is not displayed. A passing answer normally uses two
 model calls; a rejected draft may use a third revision call. This improves
 answer structure and reduces unsupported claims, but it cannot guarantee factual
-correctness. The reviewed local cards currently cover the throttling process and
-supervised-versus-unsupervised machine learning; other concepts still need
-instructor-approved evidence and evaluations.
+correctness. The instructor-reviewable local cards currently cover Newton's
+first law, throttling, integration by substitution, SN1 versus SN2, supervised
+versus unsupervised learning, dramatic irony in *Oedipus Rex*, and causes of the
+French Revolution. Other concepts still need instructor-approved evidence.
+
+When a local card matches, the app skips unnecessary web research. If the Muse
+critic returns no visible text, it retries once and then uses the deterministic
+rubric and reviewed-card fallback rather than aborting. Responses include
+separate automated checks for correctness/evidence agreement, grounding,
+directness, tool precision, and reliability; these are not official benchmark
+or ground-truth scores.
 
 The Student Profile intentionally has no Active Course selector. The current
 question controls topic detection, evidence retrieval, and resource ranking so a
@@ -71,8 +79,8 @@ the `.app` or ZIP. Change `AI_AGENT_MODE=mock` to return to Mock Mode.
 In Meta Mode, the Tutor shows a compact **Agent activity** trace: detected
 subject and intent, evidence tools used, quality checks, revisions, and the
 release score. This is an auditable action trace, not the model's private
-chain-of-thought. Online retrieval is restricted to Wikipedia's public API;
-reviewed local concept cards remain the preferred evidence when available.
+chain-of-thought. Conditional online retrieval is restricted to Wikipedia's
+public API; reviewed local concept cards remain the preferred evidence.
 
 ## Privacy and compatibility
 

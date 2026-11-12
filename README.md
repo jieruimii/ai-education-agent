@@ -7,7 +7,7 @@ A desktop prototype for instructor-governed AI learning support, built with Pyth
 - Student, TA, and Research Team role views
 - Tutor Agent for explanations and comprehension checks
 - Release-gated Tutor harness: analyze, ground, draft, evaluate, revise once, then display
-- Instructor-reviewable concept evidence for throttling, supervised versus unsupervised learning, and Newton's first law
+- Instructor-reviewable concept evidence for physics, thermodynamics, mathematics, chemistry, computer science, literature, and history
 - Question-first topic routing; no Active Course selector can bias an unrelated question
 - Bounded Wikipedia research in Meta Mode, followed by evidence-bounded drafting and release checks
 - Visible action trace for classification, retrieval, quality checks, revision, and release
@@ -26,6 +26,12 @@ Live Tutor answers are no longer displayed directly from a single model call. Py
 question contract, retrieves exact approved concept evidence, requests a structured explanation,
 checks it with a deterministic rubric and a schema-checked critic, and revises once when needed.
 Only the checked final text reaches the Tkinter chat.
+
+Reviewed local evidence now suppresses unnecessary web searches. If the Muse critic returns no
+visible text, the harness retries it once with a larger allowance and then safely falls back to
+the deterministic release rubric instead of aborting the student answer. The UI reports separate
+automated checks for correctness/evidence agreement, grounding, directness, tool precision, and
+reliability. These are harness diagnostics, not official benchmark or ground-truth scores.
 
 Run the offline quality regression suite:
 
@@ -86,7 +92,7 @@ expression falls back to readable text instead of breaking the response stream.
 - The repository includes only `.env.example`.
 - Provider calls use low reasoning effort and a 2,048-token output cap by default.
 - The legacy provider seam retains six turns; the harnessed Tutor path sends at most four prior turns.
-- Harnessed Tutor mode uses two model calls when the draft passes and up to three when one revision is required.
+- Harnessed Tutor mode normally uses two model calls, with one bounded critic retry or one revision when needed.
 - External file uploads are disabled; selected files remain on the device.
 - Direct-answer requests are answered in Tutor mode and refused only in Problem-Solving mode.
 

@@ -34,13 +34,13 @@ Student question + profile
 1. ANALYZE — intent, topic, level, required answer sections
           |
           v
-2. RETRIEVE — exact match to approved concept cards
+2. RETRIEVE — exact match to approved concept cards; call bounded web research only when local evidence is absent or freshness is explicit
           |
           v
 3. DRAFT — direct answer bounded by retrieved evidence
           |
           v
-4. EVALUATE — deterministic rubric + schema-checked model critic
+4. EVALUATE — deterministic rubric + schema-checked model critic with one bounded no-text retry
           |
      pass | fail
           |   `--> 5. REVISE ONCE — defect list + same evidence
@@ -52,7 +52,7 @@ Student question + profile
                     |
           failed again?
                     v
-7. FALLBACK — deterministic concept card or request for approved course material
+7. FALLBACK — deterministic discipline-appropriate concept card or request for approved course material
 ```
 
 This is one education agent invoked in bounded roles. The model does not decide which stage

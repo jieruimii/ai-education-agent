@@ -1250,6 +1250,15 @@ class EducationAgentApp(tk.Tk):
                     )
                     if recommendations:
                         assembled += "\n\n" + format_recommendations(recommendations)
+                    if trace and trace.quality_scores:
+                        assembled += (
+                            "\n\n### Automated quality checks\n"
+                            "These are harness checks, not official benchmark or ground-truth scores.\n"
+                            + "\n".join(
+                                f"- {name.title()}: {score}/100"
+                                for name, score in trace.quality_scores.items()
+                            )
+                        )
                     if activity_lines:
                         assembled += "\n\n### Agent activity\n" + "\n".join(
                             f"- {line}" for line in activity_lines
@@ -1258,8 +1267,11 @@ class EducationAgentApp(tk.Tk):
                     self.session_messages[target_agent].append(("ai", assembled))
                     if trace:
                         revision = "revised once" if trace.revised else "draft passed"
+                        reliability = trace.quality_scores.get("reliability", 0)
+                        grounding = trace.quality_scores.get("grounding", 0)
                         self.status_var.set(
-                            f"Tutor harness released • coverage gate {trace.final_score}/100 • {revision}"
+                            f"Tutor released • reliability {reliability}/100 • "
+                            f"grounding {grounding}/100 • {revision}"
                         )
                     else:
                         self.status_var.set(self._base_status())

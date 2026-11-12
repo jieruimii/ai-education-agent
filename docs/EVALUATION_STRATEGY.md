@@ -11,6 +11,16 @@ release`. The local regression suite checks subject routing, reviewed evidence,
 required explanation sections, misconceptions, resource relevance, and leakage
 guards. These tests are offline and deterministic; they are the deployment gate.
 
+The Student UI reports five separate automated harness diagnostics:
+
+- **Correctness:** agreement with the reviewed evidence and critic, not independent proof of truth.
+- **Grounding:** whether supplied evidence is identified in the released answer.
+- **Directness:** whether the first line answers the question and the response stays within its word budget.
+- **Tool precision:** whether research was necessary and whether retrieved titles passed relevance filtering.
+- **Reliability:** whether the normal critic path completed or required retry/fallback.
+
+These diagnostics must never be reported as HLE, MMLU, GAIA, BFCL, or factual-accuracy scores.
+
 ## External benchmark map
 
 | Layer | Benchmark | What it tests here | Status |
