@@ -246,8 +246,12 @@ class OpenAIResponsesProvider:
                 "parameters": TOOL_DEFINITION["input_schema"],
                 "strict": True,
             }]
-            if require_tool:
-                kwargs["tool_choice"] = {"type": "function", "name": TOOL_NAME}
+            # Muse's Responses API currently rejects `required` and named
+            # function choices. Its only supported tool-selection value is
+            # `auto`. The pipeline still enforces exactly one math call before
+            # it will execute or release any answer, so this provider
+            # compatibility setting does not weaken the verification gate.
+            kwargs["tool_choice"] = "auto"
         with self._lock:
             response = self._client.responses.create(**kwargs)
         calls: list[ToolCall] = []

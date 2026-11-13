@@ -84,7 +84,7 @@ class AgentPipelineTests(unittest.TestCase):
         )
         self.assertEqual(turn.tool_calls[0].id, "call-math")
         request = client.responses.calls[0]
-        self.assertEqual(request["tool_choice"]["name"], "execute_verified_math")
+        self.assertEqual(request["tool_choice"], "auto")
         self.assertFalse(request["parallel_tool_calls"])
         self.assertEqual(request["input"][0]["role"], "user")
 
